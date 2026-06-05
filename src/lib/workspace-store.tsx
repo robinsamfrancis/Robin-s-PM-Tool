@@ -99,6 +99,7 @@ export interface Attachment {
   uploadedBy: string;
   uploadedAt: string;
   version: number;
+  documentId?: string;
 }
 export interface Worklog {
   id: string;
@@ -241,6 +242,45 @@ export interface DocumentFolder {
   parentId: string | null;
   createdAt: string;
 }
+
+const syncDocAttachments = (
+  items: BacklogItem[],
+  doc: ProjectDocument,
+): BacklogItem[] => {
+  const associatedItemIds = doc.associations.map((a) => a.id);
+  return items.map((i) => {
+    const isAssociated = associatedItemIds.includes(i.id);
+    const hasAttachment = (i.attachments ?? []).some(
+      (a) => a.documentId === doc.id || a.name === doc.name,
+    );
+
+    if (isAssociated && !hasAttachment) {
+      const newAtt: Attachment = {
+        id: rid("ATT"),
+        name: doc.name,
+        mime: "application/octet-stream",
+        size: doc.size,
+        url: doc.content || doc.versions[doc.versions.length - 1]?.url || "#",
+        uploadedBy: doc.lastModifiedBy,
+        uploadedAt: doc.lastModifiedAt,
+        version: doc.versions.length,
+        documentId: doc.id,
+      };
+      return {
+        ...i,
+        attachments: [...(i.attachments ?? []), newAtt],
+      };
+    } else if (!isAssociated && hasAttachment) {
+      return {
+        ...i,
+        attachments: (i.attachments ?? []).filter(
+          (a) => a.documentId !== doc.id && a.name !== doc.name,
+        ),
+      };
+    }
+    return i;
+  });
+};
 
 interface Store {
   workspaces: Workspace[];
@@ -1092,40 +1132,99 @@ export function WorkspaceStoreProvider({ children }: { children: ReactNode }) {
           ),
         })),
       addAttachment: (itemId, a) =>
-        setStore((s) => ({
-          ...s,
-          items: s.items.map((i) =>
-            i.id === itemId
-              ? {
-                  ...i,
-                  attachments: [
-                    ...(i.attachments ?? []),
-                    { ...a, id: rid("ATT"), uploadedAt: now(), version: 1 },
-                  ],
-                  activity: logActivityArr(
-                    i.activity,
-                    "attachment",
-                    a.uploadedBy,
-                    `attached ${a.name}`,
-                  ),
-                }
-              : i,
-          ),
-        })),
+        setStore((s) => {
+          const item = s.items.find((i) => i.id === itemId);
+          if (!item) return s;
+
+          const workspaceCode = itemId.split("-")[0];
+          const newAttId = rid("ATT");
+          const newDocId = rid("DOC");
+
+          // Create the new document
+          const newDoc: ProjectDocument = {
+            id: newDocId,
+            workspaceCode,
+            name: a.name,
+            type: a.name.split(".").pop() || "unknown",
+            folderId: null,
+            content: a.url,
+            size: a.size,
+            versions: [
+              {
+                name: a.name,
+                url: a.url,
+                size: a.size,
+                uploadedBy: a.uploadedBy,
+                uploadedAt: now(),
+              },
+            ],
+            associations: [
+              {
+                type: item.type.toLowerCase() as any,
+                id: item.id,
+                title: item.title,
+              },
+            ],
+            createdBy: a.uploadedBy,
+            createdAt: now(),
+            lastModifiedBy: a.uploadedBy,
+            lastModifiedAt: now(),
+            viewCount: 0,
+          };
+
+          const newAttachment: Attachment = {
+            ...a,
+            id: newAttId,
+            uploadedAt: now(),
+            version: 1,
+            documentId: newDocId,
+          };
+
+          return {
+            ...s,
+            documents: [...(s.documents || []), newDoc],
+            items: s.items.map((i) =>
+              i.id === itemId
+                ? {
+                    ...i,
+                    attachments: [...(i.attachments ?? []), newAttachment],
+                    activity: logActivityArr(
+                      i.activity,
+                      "attachment",
+                      a.uploadedBy,
+                      `attached ${a.name}`,
+                    ),
+                  }
+                : i,
+            ),
+          };
+        }),
       removeAttachment: (itemId, attId) =>
-        setStore((s) => ({
-          ...s,
-          items: s.items.map((i) =>
-            i.id === itemId
-              ? {
-                  ...i,
-                  attachments: (i.attachments ?? []).filter(
-                    (a) => a.id !== attId,
-                  ),
-                }
-              : i,
-          ),
-        })),
+        setStore((s) => {
+          const item = s.items.find((i) => i.id === itemId);
+          if (!item) return s;
+          const removedAtt = item.attachments?.find((a) => a.id === attId);
+          const docIdToRemove = removedAtt?.documentId;
+
+          return {
+            ...s,
+            documents: docIdToRemove
+              ? (s.documents || []).filter(
+                  (d) => d.id !== docIdToRemove && d.name !== removedAtt.name,
+                )
+              : (s.documents || []).filter((d) => d.name !== removedAtt?.name),
+            items: s.items.map((i) =>
+              i.id === itemId
+                ? {
+                    ...i,
+                    attachments: (i.attachments ?? []).filter(
+                      (a) => a.id !== attId,
+                    ),
+                  }
+                : i,
+            ),
+          };
+        }),
       addDependencyRisk: (itemId, dr) =>
         setStore((s) => ({
           ...s,
@@ -1293,7 +1392,11 @@ export function WorkspaceStoreProvider({ children }: { children: ReactNode }) {
             const newDocs = [...docs];
             newDocs[existingIdx] = updatedDoc;
 
-            return { ...s, documents: newDocs };
+            return {
+              ...s,
+              documents: newDocs,
+              items: syncDocAttachments(s.items, updatedDoc),
+            };
           } else {
             const newDoc: ProjectDocument = {
               id: rid("DOC"),
@@ -1321,7 +1424,11 @@ export function WorkspaceStoreProvider({ children }: { children: ReactNode }) {
               viewCount: 1,
             };
 
-            return { ...s, documents: [...docs, newDoc] };
+            return {
+              ...s,
+              documents: [...docs, newDoc],
+              items: syncDocAttachments(s.items, newDoc),
+            };
           }
         }),
       createDocument: (doc) =>
@@ -1355,43 +1462,59 @@ export function WorkspaceStoreProvider({ children }: { children: ReactNode }) {
           return {
             ...s,
             documents: [...(s.documents || []), newDoc],
+            items: syncDocAttachments(s.items, newDoc),
           };
         }),
       updateDocument: (id, patch) =>
         setStore((s) => {
           const nowStr = new Date().toISOString();
+          let updatedFullDoc: ProjectDocument | null = null;
+
+          const newDocs = (s.documents || []).map((d) => {
+            if (d.id !== id) return d;
+            const updatedVersions = [...d.versions];
+            let size = d.size;
+            if (patch.content !== undefined && patch.content !== d.content) {
+              size = patch.content.length;
+              const nextVer = d.versions.length + 1;
+              updatedVersions.push({
+                version: nextVer,
+                name: patch.name || d.name,
+                url: patch.content,
+                size,
+                uploadedBy: patch.lastModifiedBy || d.lastModifiedBy,
+                uploadedAt: nowStr,
+              });
+            }
+            const updatedD: ProjectDocument = {
+              ...d,
+              ...patch,
+              size,
+              versions: updatedVersions,
+              lastModifiedAt: nowStr,
+            };
+            updatedFullDoc = updatedD;
+            return updatedD;
+          });
+
           return {
             ...s,
-            documents: (s.documents || []).map((d) => {
-              if (d.id !== id) return d;
-              const updatedVersions = [...d.versions];
-              let size = d.size;
-              if (patch.content !== undefined && patch.content !== d.content) {
-                size = patch.content.length;
-                const nextVer = d.versions.length + 1;
-                updatedVersions.push({
-                  version: nextVer,
-                  name: patch.name || d.name,
-                  url: patch.content,
-                  size,
-                  uploadedBy: patch.lastModifiedBy || d.lastModifiedBy,
-                  uploadedAt: nowStr,
-                });
-              }
-              return {
-                ...d,
-                ...patch,
-                size,
-                versions: updatedVersions,
-                lastModifiedAt: nowStr,
-              };
-            }),
+            documents: newDocs,
+            items: updatedFullDoc
+              ? syncDocAttachments(s.items, updatedFullDoc)
+              : s.items,
           };
         }),
       deleteDocument: (id) =>
         setStore((s) => ({
           ...s,
           documents: (s.documents || []).filter((d) => d.id !== id),
+          items: s.items.map((i) => ({
+            ...i,
+            attachments: (i.attachments ?? []).filter(
+              (a) => a.documentId !== id,
+            ),
+          })),
         })),
       incrementDocumentView: (id) =>
         setStore((s) => ({

@@ -340,9 +340,9 @@ function TaskBody({
       </header>
 
       {/* Body */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_320px] min-h-0 overflow-y-auto overflow-x-hidden md:overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto overflow-x-hidden md:overflow-hidden">
         {/* Center */}
-        <div className="flex flex-col min-w-0 border-b md:border-b-0 md:border-r border-border min-h-0 shrink-0 md:h-full md:overflow-hidden overflow-x-hidden">
+        <div className="flex flex-1 flex-col min-w-0 border-b md:border-b-0 md:border-r md:border-border min-h-0 h-full overflow-hidden">
           <nav className="shrink-0 bg-card/80 border-b border-border px-2 flex items-center gap-0 overflow-x-auto">
             {TABS.map((t) => {
               const Icon = t.icon;
@@ -364,7 +364,7 @@ function TaskBody({
               );
             })}
           </nav>
-          <div className="overflow-y-auto p-6 min-h-0 md:flex-1">
+          <div className="flex-1 overflow-y-auto min-h-0 p-6">
             {tab === "overview" && (
               <OverviewTab item={item} onOpenOther={onOpenOther} />
             )}
@@ -380,7 +380,7 @@ function TaskBody({
         </div>
 
         {/* Sidebar */}
-        <aside className="bg-muted/20 md:h-full md:overflow-y-auto shrink-0">
+        <aside className="bg-muted/20 w-full md:w-[320px] shrink-0 h-auto md:h-full overflow-y-auto">
           <PropertiesSidebar item={item} />
         </aside>
       </div>

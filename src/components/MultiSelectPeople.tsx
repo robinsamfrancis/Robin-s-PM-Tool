@@ -7,12 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export function MultiSelectPeople({
-  value,
+  value = [],
   onChange,
   placeholder = "Search people…",
   pool = DIRECTORY,
 }: {
-  value: string[];
+  value?: string[];
   onChange: (ids: string[]) => void;
   placeholder?: string;
   pool?: Person[];

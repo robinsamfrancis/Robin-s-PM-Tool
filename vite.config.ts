@@ -5,19 +5,34 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { createLogger } from "vite";
+
+const logger = createLogger();
+const originalWarn = logger.warn;
+logger.warn = (msg, options) => {
+  if (msg.includes("Module level directives cause errors when bundled")) return;
+  originalWarn(msg, options);
+};
 
 export default defineConfig({
   vite: {
+    customLogger: logger,
     build: {
       rollupOptions: {
         onwarn(warning, warn) {
-          if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {
+          if (
+            warning.code === "MODULE_LEVEL_DIRECTIVE" ||
+            warning.message.includes(
+              "Module level directives cause errors when bundled",
+            ) ||
+            (warning.id && warning.id.includes("use client"))
+          ) {
             return;
           }
           warn(warning);
-        }
-      }
-    }
+        },
+      },
+    },
   },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
@@ -25,6 +40,6 @@ export default defineConfig({
     server: { entry: "server" },
   },
   nitro: {
-    preset: "node-server"
-  }
+    preset: process.env.VERCEL ? "vercel" : "node-server",
+  },
 });

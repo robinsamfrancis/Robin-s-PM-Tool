@@ -299,8 +299,8 @@ function WorkspaceRisksPage() {
   if (!workspace) return null;
 
   return (
-    <div className="flex flex-col h-full bg-background flex-1 min-h-0 min-w-0 font-sans p-6 overflow-y-auto">
-      <div className="mx-auto w-full max-w-7xl space-y-6">
+    <>
+      <div className="mx-auto w-full max-w-7xl px-4 lg:px-8 py-6 space-y-6">
         {/* Header Options */}
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -561,209 +561,214 @@ function WorkspaceRisksPage() {
         </div>
 
         {/* Table */}
-        <div className="border border-border rounded-xl bg-card overflow-x-auto shadow-sm pb-10">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-muted/40 border-b border-border text-xs font-semibold text-muted-foreground select-none">
-                <th className="p-3 w-[150px]">Linked Issue</th>
-                <th className="p-3 min-w-[200px]">Description</th>
-                <th className="p-3 w-[160px]">Mitigation Note</th>
-                <th className="p-3 w-24">Impact Level</th>
-                <th className="p-3 w-28 text-center">Status</th>
-                <th className="p-3 w-32 items-center">Owner(s)</th>
-                <th className="p-3 w-32 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRecords.map((dr) => (
-                <tr
-                  key={`${dr.itemId}-${dr.id}`}
-                  className="hover:bg-muted/30 text-sm transition-colors border-b border-border/80 last:border-0 group"
-                >
-                  <td className="p-3 align-top">
-                    <button
-                      onClick={() => openTask(dr.itemId, "dependencies")}
-                      className="text-left group/btn flex items-start gap-1.5 hover:bg-muted/60 p-1.5 -ml-1.5 rounded transition-colors"
-                    >
-                      <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap mt-0.5">
-                        {dr.item.id}
-                      </span>
-                      <span
-                        className="text-[12px] font-medium leading-tight text-foreground group-hover/btn:text-indigo-600 transition-colors line-clamp-2"
-                        title={dr.item.title}
+        <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-card shadow-[0_1px_0_0_theme(colors.border)] gap-0">
+                <tr className="bg-muted/40 border-b border-border text-xs font-semibold text-muted-foreground select-none">
+                  <th className="p-3 w-[150px]">Linked Issue</th>
+                  <th className="p-3 min-w-[200px]">Description</th>
+                  <th className="p-3 w-[160px]">Mitigation Note</th>
+                  <th className="p-3 w-24">Impact Level</th>
+                  <th className="p-3 w-28 text-center">Status</th>
+                  <th className="p-3 w-32 items-center">Owner(s)</th>
+                  <th className="p-3 w-32 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRecords.map((dr) => (
+                  <tr
+                    key={`${dr.itemId}-${dr.id}`}
+                    className="hover:bg-muted/30 text-sm transition-colors border-b border-border/80 last:border-0 group"
+                  >
+                    <td className="p-3 align-top">
+                      <button
+                        onClick={() => openTask(dr.itemId, "dependencies")}
+                        className="text-left group/btn flex items-start gap-1.5 hover:bg-muted/60 p-1.5 -ml-1.5 rounded transition-colors"
                       >
-                        {dr.item.title}
-                      </span>
-                    </button>
-                  </td>
-                  <td className="p-3 align-top">
-                    <div className="flex flex-col gap-1.5">
-                      {dr.type === "Dependency" ? (
-                        <Badge className="bg-blue-100/50 hover:bg-blue-100/50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 font-medium text-[9px] w-fit px-1.5 py-0">
-                          Dependency
-                        </Badge>
+                        <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap mt-0.5">
+                          {dr.item.id}
+                        </span>
+                        <span
+                          className="text-[12px] font-medium leading-tight text-foreground group-hover/btn:text-indigo-600 transition-colors line-clamp-2"
+                          title={dr.item.title}
+                        >
+                          {dr.item.title}
+                        </span>
+                      </button>
+                    </td>
+                    <td className="p-3 align-top">
+                      <div className="flex flex-col gap-1.5">
+                        {dr.type === "Dependency" ? (
+                          <Badge className="bg-blue-100/50 hover:bg-blue-100/50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 font-medium text-[9px] w-fit px-1.5 py-0">
+                            Dependency
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-amber-100/50 hover:bg-amber-100/50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-medium text-[9px] w-fit px-1.5 py-0">
+                            Risk
+                          </Badge>
+                        )}
+                        <p className="text-foreground text-xs leading-relaxed truncate-none break-words">
+                          {dr.description}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="p-3 align-top">
+                      {dr.mitigationNote ? (
+                        <p
+                          className="text-muted-foreground text-xs line-clamp-3 leading-relaxed"
+                          title={dr.mitigationNote}
+                        >
+                          {dr.mitigationNote}
+                        </p>
                       ) : (
-                        <Badge className="bg-amber-100/50 hover:bg-amber-100/50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-medium text-[9px] w-fit px-1.5 py-0">
-                          Risk
-                        </Badge>
-                      )}
-                      <p className="text-foreground text-xs leading-relaxed truncate-none break-words">
-                        {dr.description}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="p-3 align-top">
-                    {dr.mitigationNote ? (
-                      <p
-                        className="text-muted-foreground text-xs line-clamp-3 leading-relaxed"
-                        title={dr.mitigationNote}
-                      >
-                        {dr.mitigationNote}
-                      </p>
-                    ) : (
-                      <span className="text-muted-foreground/60 text-xs">
-                        -
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3 align-top">
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <div
-                        className={`h-2 w-2 rounded-full ${IMPACT_COLORS[dr.impactLevel]}`}
-                      />
-                      <span className="text-xs font-medium text-foreground">
-                        {dr.impactLevel}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-3 align-top">
-                    <Badge
-                      className={`${STATUS_COLORS[dr.status]} text-[10px] uppercase font-bold border-none mt-0.5 w-full justify-center`}
-                    >
-                      {dr.status}
-                    </Badge>
-                  </td>
-                  <td className="p-3 align-top">
-                    <div className="flex flex-wrap gap-1 mt-0.5">
-                      {dr.ownerIds && dr.ownerIds.length > 0 ? (
-                        <>
-                          {(() => {
-                            const firstOwner = DIRECTORY.find(
-                              (d) => d.id === dr.ownerIds[0],
-                            );
-                            if (!firstOwner) return null;
-                            return (
-                              <div
-                                key={dr.ownerIds[0]}
-                                className="inline-flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-[11px] font-medium text-foreground border border-border/30"
-                              >
-                                <PersonAvatar
-                                  userId={dr.ownerIds[0]}
-                                  size="xs"
-                                />
-                                <span className="truncate max-w-[65px]">
-                                  {firstOwner.name.split(" ")[0]}
-                                </span>
-                              </div>
-                            );
-                          })()}
-                          {dr.ownerIds.length > 1 && (
-                            <TooltipProvider>
-                              <Tooltip delayDuration={300}>
-                                <TooltipTrigger asChild>
-                                  <div className="inline-flex items-center justify-center bg-muted px-1.5 py-0.5 rounded-full text-[11px] font-medium text-foreground border border-border/30 cursor-pointer">
-                                    <Plus className="h-3 w-3 mr-0.5" />
-                                    {dr.ownerIds.length - 1}
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                  <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                                      All Owners
-                                    </span>
-                                    {dr.ownerIds.map((id) => {
-                                      const owner = DIRECTORY.find(
-                                        (d) => d.id === id,
-                                      );
-                                      if (!owner) return null;
-                                      return (
-                                        <div
-                                          key={id}
-                                          className="flex items-center gap-1.5 whitespace-nowrap"
-                                        >
-                                          <PersonAvatar userId={id} size="xs" />
-                                          <span className="text-xs">
-                                            {owner.name}
-                                          </span>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-xs text-muted-foreground mt-1">
+                        <span className="text-muted-foreground/60 text-xs">
                           -
                         </span>
                       )}
-                    </div>
-                  </td>
-                  <td className="p-3 align-top text-center">
-                    <div className="flex items-center justify-center gap-1.5 mt-0.5">
-                      <Select
-                        value={dr.status}
-                        onValueChange={(val) =>
-                          updateRecordStatus(
-                            dr,
-                            val as DependencyRisk["status"],
-                          )
-                        }
+                    </td>
+                    <td className="p-3 align-top">
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <div
+                          className={`h-2 w-2 rounded-full ${IMPACT_COLORS[dr.impactLevel]}`}
+                        />
+                        <span className="text-xs font-medium text-foreground">
+                          {dr.impactLevel}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-3 align-top">
+                      <Badge
+                        className={`${STATUS_COLORS[dr.status]} text-[10px] uppercase font-bold border-none mt-0.5 w-full justify-center`}
                       >
-                        <SelectTrigger className="h-7 w-[95px] text-[10px] border-border">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Open">Open</SelectItem>
-                          <SelectItem value="In Progress">
-                            In Progress
-                          </SelectItem>
-                          <SelectItem value="Closed">Closed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <button
-                        onClick={() => openEditForm(dr)}
-                        className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                        title="Edit Record"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(dr)}
-                        className="p-1.5 rounded text-destructive/70 hover:text-destructive hover:bg-destructive/10 transition-colors"
-                        title="Delete Record"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredRecords.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="p-8 text-center text-muted-foreground text-sm"
-                  >
-                    No dependency or risk records found matching the active
-                    filters.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                        {dr.status}
+                      </Badge>
+                    </td>
+                    <td className="p-3 align-top">
+                      <div className="flex flex-wrap gap-1 mt-0.5">
+                        {dr.ownerIds && dr.ownerIds.length > 0 ? (
+                          <>
+                            {(() => {
+                              const firstOwner = DIRECTORY.find(
+                                (d) => d.id === dr.ownerIds[0],
+                              );
+                              if (!firstOwner) return null;
+                              return (
+                                <div
+                                  key={dr.ownerIds[0]}
+                                  className="inline-flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-[11px] font-medium text-foreground border border-border/30"
+                                >
+                                  <PersonAvatar
+                                    userId={dr.ownerIds[0]}
+                                    size="xs"
+                                  />
+                                  <span className="truncate max-w-[65px]">
+                                    {firstOwner.name.split(" ")[0]}
+                                  </span>
+                                </div>
+                              );
+                            })()}
+                            {dr.ownerIds.length > 1 && (
+                              <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                  <TooltipTrigger asChild>
+                                    <div className="inline-flex items-center justify-center bg-muted px-1.5 py-0.5 rounded-full text-[11px] font-medium text-foreground border border-border/30 cursor-pointer">
+                                      <Plus className="h-3 w-3 mr-0.5" />
+                                      {dr.ownerIds.length - 1}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    <div className="flex flex-col gap-1">
+                                      <span className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
+                                        All Owners
+                                      </span>
+                                      {dr.ownerIds.map((id) => {
+                                        const owner = DIRECTORY.find(
+                                          (d) => d.id === id,
+                                        );
+                                        if (!owner) return null;
+                                        return (
+                                          <div
+                                            key={id}
+                                            className="flex items-center gap-1.5 whitespace-nowrap"
+                                          >
+                                            <PersonAvatar
+                                              userId={id}
+                                              size="xs"
+                                            />
+                                            <span className="text-xs">
+                                              {owner.name}
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-xs text-muted-foreground mt-1">
+                            -
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-3 align-top text-center">
+                      <div className="flex items-center justify-center gap-1.5 mt-0.5">
+                        <Select
+                          value={dr.status}
+                          onValueChange={(val) =>
+                            updateRecordStatus(
+                              dr,
+                              val as DependencyRisk["status"],
+                            )
+                          }
+                        >
+                          <SelectTrigger className="h-7 w-[95px] text-[10px] border-border">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Open">Open</SelectItem>
+                            <SelectItem value="In Progress">
+                              In Progress
+                            </SelectItem>
+                            <SelectItem value="Closed">Closed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <button
+                          onClick={() => openEditForm(dr)}
+                          className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                          title="Edit Record"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(dr)}
+                          className="p-1.5 rounded text-destructive/70 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          title="Delete Record"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredRecords.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="p-8 text-center text-muted-foreground text-sm"
+                    >
+                      No dependency or risk records found matching the active
+                      filters.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -842,7 +847,7 @@ function WorkspaceRisksPage() {
                 Owner(s)
               </label>
               <MultiSelectPeople
-                selectedIds={formOwnerIds}
+                value={formOwnerIds}
                 onChange={setFormOwnerIds}
                 pool={DIRECTORY.filter(
                   (d) =>
@@ -924,6 +929,6 @@ function WorkspaceRisksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
